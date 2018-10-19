@@ -1,0 +1,771 @@
+" Vim配置文件
+"
+" _________________________________________________________________
+" 需求
+
+" ctags
+" wmctrl
+" ack-grep
+" pep8 (pip)
+" autopep8 (pip)
+" instant-markdown-d (npm)
+
+" vimproc
+" YCM: cmake, libclang
+
+
+" _________________________________________________________________
+" 引入资源文件
+
+" vim-plug
+source ~/.vim/confsrc/vim-plug.vim
+
+
+" _________________________________________________________________
+" 配色与字体
+
+" 配色方案
+" s - solarized (background - light/dark), t - base16-default-dark(tomorrow-night)
+
+if has('gui_running')
+    let g:colors_name = "solarized"
+    set background="dark"
+else
+    let g:colors_name = "base16-default-dark"
+    set termguicolors
+endif
+
+" 设置 gvim 显示字体
+set guifont=Powerline\ Consolas\ 14
+"set guifont=YaHei\ Consolas\ Hybrid\ 14
+
+
+" _________________________________________________________________
+" 函数
+
+" 将外部命令 wmctrl 控制窗口最大化的命令行参数封装成一个 vim 的函数
+fun! ToggleFullscreen()
+    call system("wmctrl -ir " . v:windowid . " -b toggle,fullscreen")
+endf
+" 需要安装wmctrl
+" 全屏开/关快捷键
+map <silent> <F11> :call ToggleFullscreen()<CR>
+" 启动 vim 时自动全屏
+"autocmd VimEnter * call ToggleFullscreen()
+
+" 默认shift+enter行尾加分号并换行
+inoremap <S-enter> <C-o>A;<enter>
+" ctrl+enter跳到行尾换行
+inoremap <C-enter> <C-o>A<enter>
+" Python ctrl+enter行尾加冒号并换行
+autocmd FileType python inoremap <C-enter> <C-o>A:<enter>
+" Python shift+enter跳到行尾并换行
+autocmd FileType python inoremap <S-enter> <C-o>A<enter>
+
+" 保存文件时删除多余空格
+fun! <SID>StripTrailingWhitespaces()
+    let l = line(".")
+    let c = col(".")
+    %s/\s\+$//e
+    call cursor(l, c)
+endfun
+autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+
+" 按F5编译运行
+func! CompileRun()
+    exec "w"
+    if &filetype == 'c'
+        "exec "!gcc % -o %< -std=c99"
+        exec "!clang % -o %< -std=c99"
+        exec "!time ./%<"
+    elseif &filetype == 'cpp'
+        "exec "!g++ % -o %<"
+        exec "!clang++ % -o %<"
+        exec "!time ./%<"
+    elseif &filetype == 'java'
+        exec "!javac %"
+        exec "!time java %<"
+    elseif &filetype == 'sh'
+        exec "!time ./%"
+    elseif &filetype == 'python'
+        exec "!time python %"
+    elseif &filetype == 'ruby'
+        exec "!time ruby %"
+    elseif &filetype == 'html'
+        exec "!google-chrome % &"
+    elseif &filetype == 'go'
+        exec "!time go run %"
+    elseif &filetype == 'scheme'
+        exec "!time racket %"
+    endif
+endfunc
+autocmd FileType c,cpp,java,sh,python,ruby,html,go,scheme,markdown map <F5> :call CompileRun()<CR>
+
+
+" _________________________________________________________________
+" 基本设置
+
+" 定义快捷键的前缀，即<Leader>
+let mapleader=";"
+
+" 设置快捷键将选中文本块复制至系统剪贴板
+vnoremap <Leader>y "+y
+" 设置快捷键将系统剪贴板内容粘贴至 vim
+nmap <Leader>p "+p
+" 定义快捷键关闭当前分割窗口
+nmap <Leader>q :q<CR>
+" 定义快捷键保存当前窗口内容
+nmap <Leader>w :w<CR>
+" 定义快捷键保存所有窗口内容并退出 vim
+nmap <Leader>WQ :wa<CR>:q<CR>
+" 不做任何保存，直接退出 vim
+nmap <Leader>Q :qa!<CR>
+
+" 依次遍历子窗口
+nnoremap <leader>nw <C-W><C-W>
+" 跳转至右方的窗口
+nnoremap <c-l> <C-W>l
+" 跳转至左方的窗口
+nnoremap <c-h> <C-W>h
+" 跳转至上方的子窗口
+nnoremap <c-k> <C-W>k
+" 跳转至下方的子窗口
+nnoremap <c-j> <C-W>j
+" 定义<leader>j向下滚动
+nnoremap <leader>j <c-d>
+" 定义<leader>k向上滚动
+nnoremap <leader>k <c-u>
+
+" 新建buffer
+noremap <c-t> :vertical new<CR>
+" 关闭buffer
+noremap <c-w> :bd<CR>
+" 映射切换buffer的键位
+nnoremap [b :bp<CR>
+nnoremap ]b :bn<CR>
+
+" 新建tab
+noremap <leader>nt :tabnew<CR>
+" 关闭tab
+noremap <leader>dt :tabc<CR>
+" 映射切换buffer的键位
+nnoremap [t :tabp<CR>
+nnoremap ]t :tabn<CR>
+
+" 开启文件类型侦测
+filetype on
+" 根据侦测到的不同类型加载对应的插件
+filetype plugin on
+
+" 启动 vim 时关闭折叠代码
+set nofoldenable
+
+" 开启实时搜索功能
+set incsearch
+" 搜索时大小写不敏感
+set ignorecase
+" 关闭兼容模式
+set nocompatible
+" vim 自身命令行模式智能补全
+set wildmenu
+
+" 让配置变更立即生效
+"autocmd BufWritePost $MYVIMRC source $MYVIMRC
+
+" 禁止光标闪烁
+set gcr=a:block-blinkon0
+"set gcr=i:ver10-blinkon0
+" 禁止显示滚动条
+set guioptions-=l
+set guioptions-=L
+set guioptions-=r
+set guioptions-=R
+" 禁止显示菜单和工具条
+set guioptions-=m
+set guioptions-=T
+
+" 废弃F1
+nmap <f1> <nop>
+imap <f1> <nop>
+
+" 总是显示状态栏
+set laststatus=2
+" 显示光标当前位置
+set ruler
+" 开启行号显示
+set number
+" 高亮显示当前行/列
+set cursorline
+set cursorcolumn
+" 高亮显示搜索结果
+set hlsearch
+
+" 自动折行
+set wrap
+" 禁止折行
+" set nowrap
+
+" 开启语法高亮功能
+syntax enable
+" 允许用指定语法高亮配色方案替换默认方案
+syntax on
+
+" 自适应不同语言的智能缩进
+filetype indent on
+" 将制表符扩展为空格
+set expandtab
+" 设置编辑时制表符占用空格数
+set tabstop=4
+" 设置格式化时制表符占用空格数
+set shiftwidth=4
+" 让 vim 把连续数量的空格视为一个制表符
+set softtabstop=4
+
+" 环境恢复
+" 设置环境保存项
+set sessionoptions="blank,buffers,globals,localoptions,tabpages,sesdir,folds,help,options,resize,winpos,winsize"
+" 保存 undo 历史
+"set undodir=~/.undo_history/
+"set undofile
+" 保存快捷键
+map <leader>ss :mksession! ~/vimproj/workspace.vim<cr> :wviminfo! ~/vimproj/workspace.viminfo<cr>
+" 恢复快捷键
+map <leader>rs :source ~/vimproj/workspace.vim<cr> :rviminfo ~/vimproj/workspace.viminfo<cr>
+
+" 鼠标暂不启用
+"set mouse-=a
+"set mouse=a
+
+" 将U设为Redo
+nnoremap U <C-r>
+
+" 调整缩进后自动选中，方便再次操作
+vnoremap < <gv
+vnoremap > >gv
+
+" 挂起vim
+noremap <c-s> <c-z>
+
+
+" _________________________________________________________________
+" 插件配置
+
+" Airline
+" 一直开启状态栏
+set laststatus=2
+" 使用powerline打过补丁的字体
+let g:airline_powerline_fonts = 1
+" 设置tab栏样式
+"let g:airline#extensions#tabline#enabled = 1
+" tabline中当前buffer两端的分隔字符
+"let g:airline#extensions#tabline#left_sep = ' '
+" tabline中未激活buffer两端的分隔字符
+"let g:airline#extensions#tabline#left_alt_sep = '|'
+" tabline中buffer显示编号
+let g:airline#extensions#tabline#buffer_nr_show = 1
+" tabline文件路径显示方式
+let g:airline#extensions#tabline#formatter = "unique_tail"
+" 设置airline主题
+if colors_name == 'base16-default-dark'
+    let g:airline_theme='base16'
+elseif colors_name == 'solarized'
+    let g:airline_theme='sol'
+endif
+
+" IndentGuides
+" 随 vim 自启动
+let g:indent_guides_enable_on_vim_startup=1
+" 从第二层开始可视化显示缩进
+let g:indent_guides_start_level=2
+" 色块宽度
+let g:indent_guides_guide_size=1
+" 快捷键 i 开/关缩进可视化
+:nmap <silent> <Leader>i <Plug>IndentGuidesToggle
+
+" vim-signature
+"let g:SignatureMap = {
+        \ 'Leader'             :  "m",
+        \ 'PlaceNextMark'      :  "m,",
+        \ 'ToggleMarkAtLine'   :  "m.",
+        \ 'PurgeMarksAtLine'   :  "m-",
+        \ 'DeleteMark'         :  "dm",
+        \ 'PurgeMarks'         :  "mda",
+        \ 'PurgeMarkers'       :  "m<BS>",
+        \ 'GotoNextLineAlpha'  :  "']",
+        \ 'GotoPrevLineAlpha'  :  "'[",
+        \ 'GotoNextSpotAlpha'  :  "`]",
+        \ 'GotoPrevSpotAlpha'  :  "`[",
+        \ 'GotoNextLineByPos'  :  "]'",
+        \ 'GotoPrevLineByPos'  :  "['",
+        \ 'GotoNextSpotByPos'  :  "mn",
+        \ 'GotoPrevSpotByPos'  :  "mp",
+        \ 'GotoNextMarker'     :  "[+",
+        \ 'GotoPrevMarker'     :  "[-",
+        \ 'GotoNextMarkerAny'  :  "]=",
+        \ 'GotoPrevMarkerAny'  :  "[=",
+        \ 'ListLocalMarks'     :  "ms",
+        \ 'ListLocalMarkers'   :  "m?"
+        \ }
+
+" MiniBufExplorer
+" 显示/隐藏 MiniBufExplorer 窗口
+map <Leader>bl :MBEToggle<cr>
+" MiniBuffer 切换快捷键
+map <C-Tab> :MBEbn<cr>
+map <C-S-Tab> :MBEbp<cr>
+map <c-w> :MBEbd<cr>
+
+" NERDTreeToggle
+" 使用 NERDTree 插件查看工程文件。设置快捷键，速记：file list
+nmap <Leader>fl :NERDTreeToggle<CR>
+" 设置NERDTree子窗口宽度
+let NERDTreeWinSize=30
+" 设置NERDTree子窗口位置
+let NERDTreeWinPos="right"
+" 显示隐藏文件
+" let NERDTreeShowHidden=1
+" NERDTree 子窗口中不显示冗余帮助信息
+let NERDTreeMinimalUI=1
+" 删除文件时自动删除文件对应 buffer
+let NERDTreeAutoDeleteBuffer=1
+" 只剩 NERDTree时自动关闭
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
+" NERDTree忽略pyc和class文件
+let NERDTreeIgnore = ['\.pyc$', '\.pyo$', '\.class$']
+
+" Pydiction
+" 字典文件路径添加到pydiction_location变量中
+let g:pydiction_location = '~/.vim/plugged/pydiction/complete-dict'
+
+" UltiSnips
+" 使用Python 2.x
+let g:UltiSnipsUsePythonVersion = 2
+" UltiSnips 的 tab 键与 YCM 冲突，重新设定
+let g:UltiSnipsSnippetDirectories=["mysnippets"]
+let g:UltiSnipsExpandTrigger="<leader><Tab>"
+let g:UltiSnipsJumpForwardTrigger="<leader><Tab>"
+let g:UltiSnipsJumpBackwardTrigger="<leader><leader><tab>"
+" 重定义ListSnippets
+let g:UltiSnipsListSnippets="<leader><c-tab>"
+
+" YouCompleteMe
+" YCM 补全菜单配色
+if colors_name == 'solarized'
+    " 菜单
+    highlight Pmenu ctermfg=2 ctermbg=3 guifg=#005f87 guibg=#EEE8D5
+    " 选中项
+    highlight PmenuSel ctermfg=2 ctermbg=3 guifg=#AFD700 guibg=#106900
+endif
+" 补全功能在注释中同样有效
+let g:ycm_complete_in_comments=1
+" 允许 vim 加载 .ycm_extra_conf.py 文件，不再提示
+let g:ycm_confirm_extra_conf=0
+" 开启 YCM 标签补全引擎
+let g:ycm_collect_identifiers_from_tags_files=1
+" 引入 C++ 标准库tags
+" YCM 集成 OmniCppComplete 补全引擎，设置其快捷键
+inoremap <leader>; <C-x><C-o>
+" 补全内容不以分割子窗口形式出现，只显示补全列表
+set completeopt-=preview
+" 从第一个键入字符就开始罗列匹配项
+let g:ycm_min_num_of_chars_for_completion=1
+" 禁止缓存匹配项，每次都重新生成匹配项
+let g:ycm_cache_omnifunc=0
+" 语法关键字补全
+let g:ycm_seed_identifiers_with_syntax=1
+" C-tab反向遍历候选项
+let g:ycm_key_list_previous_completion=["<s-tab>"]
+" GoToDeclaration
+autocmd FileType c,cpp,objc,objcpp,python,cs,java nnoremap <leader>dc :YcmCompleter GoToDeclaration<CR>
+" GoToDefination
+autocmd FileType c,cpp,objc,objcpp,python,cs,java nnoremap <leader>df :YcmCompleter GoToDefinition<CR>
+" 设置通用ycm_extra_conf.py
+let g:ycm_global_ycm_extra_conf = '~/.vim/confsrc/.ycm_extra_conf.py'
+"let g:ycm_extra_conf_globlist = ['~/.vim/plugged/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py']
+
+" CTags
+" 正向遍历同名标签
+nmap <Leader>tn :tnext<CR>
+" 反向遍历同名标签
+nmap <Leader>tp :tprevious<CR>
+
+" Indexer
+" 见各语言自设定
+" 设置默认配置文件路径
+let g:indexer_indexerListFilename = '~/.vim/confsrc/.indexer_files'
+
+" Tagbar
+" 设置 tagbar 子窗口的位置出现在主编辑区的左边
+let tagbar_left=1
+" 设置显示／隐藏标签列表子窗口的快捷键。速记：tag list
+nnoremap <Leader>tl :TagbarToggle<CR>
+" 设置标签子窗口的宽度
+let tagbar_width=32
+" tagbar 子窗口中不显示冗余帮助信息
+let g:tagbar_compact=1
+let g:tagbar_type_go = {
+    \ 'ctagstype' : 'go',
+    \ 'kinds'     : [
+        \ 'p:package',
+        \ 'i:imports:1',
+        \ 'c:constants',
+        \ 'v:variables',
+        \ 't:types',
+        \ 'n:interfaces',
+        \ 'w:fields',
+        \ 'e:embedded',
+        \ 'm:methods',
+        \ 'r:constructor',
+        \ 'f:functions'
+    \ ],
+    \ 'sro' : '.',
+    \ 'kind2scope' : {
+        \ 't' : 'ctype',
+        \ 'n' : 'ntype'
+    \ },
+    \ 'scope2kind' : {
+        \ 'ctype' : 't',
+        \ 'ntype' : 'n'
+    \ },
+    \ 'ctagsbin'  : 'gotags',
+    \ 'ctagsargs' : '-sort -silent'
+\ }
+
+" VimShell
+" 启动VimShell
+nmap <leader>vs :tabnew<CR>:VimShell<CR>
+" 关闭VimShell
+nmap <leader>vsc :tabc<CR>:VimShellClose<CR>
+let g:vimshell_user_prompt = 'getcwd()'
+
+" MutipleCursors
+" 禁用默认键位
+let g:multi_cursor_use_default_mapping=0
+"更改与CtrlP冲突的键位
+let g:multi_cursor_next_key='<C-d>'
+let g:multi_cursor_prev_key='<C-u>'
+"let g:multi_cursor_skip_key='<C-x>'
+let g:multi_cursor_quit_key='<Esc>'
+
+" Vim-Trailing-Whitespace
+" 自动删除行尾空格
+nmap <leader><space> :FixWhitespace<CR>
+
+" Vim-Expand-Region
+" 增加/减少选中范围
+map <leader>v <Plug>(expand_region_expand)
+map <leader>V <Plug>(expand_region_shrink)
+
+" DelimitMate
+" 自动缩进
+let g:delimitMate_expand_cr=1
+" 自动空格
+let g:delimitMate_expand_space=1
+" 解决YCM和DelimitMate热键冲突
+inoremap <expr> <s-tab> pumvisible() ? "<c-p>" : (delimitMate#ShouldJump() ? "<Plug>delimitMateS-Tab" : "<tab>")
+
+" Python-Syntax
+let python_highlight_all = 1
+
+" CtrlSF
+" 设置快捷键
+vmap <c-f> <Plug>CtrlSFVwordPath
+nmap <c-f> <Plug>CtrlSFCwordPath
+
+" Ack
+" 使用ag
+let g:ackprg = 'ag --nogroup --nocolor --column'
+
+" CtrlP funky
+nnoremap <c-r> :CtrlPFunky<Cr>
+
+" GUndo
+" 调用 gundo 树
+nnoremap <c-z> :GundoToggle<CR>
+
+" Autopep8
+" 忽略E501
+"let g:autopep8_ignore="E501"
+" 保存文件自动格式化
+"autocmd BufWritePre *py :call Autopep8()
+
+" JavaComplete2
+autocmd Filetype java setlocal omnifunc=javacomplete#Complete
+"inoremap <C-space> <C-x><C-o>
+
+" Fswitch
+" *.cpp 和 *.h 间切换
+nmap <silent> <Leader>sw :FSHere<cr>
+
+" Vim-Plug
+let g:plug_timeout=65500
+
+" Rainbow-Parenttheses
+" 设置颜色
+let g:rbpt_colorpairs = [
+    \ ['brown',       'RoyalBlue3'],
+    \ ['Darkblue',    'SeaGreen3'],
+    \ ['darkgray',    'DarkOrchid3'],
+    \ ['darkgreen',   'firebrick3'],
+    \ ['darkcyan',    'RoyalBlue3'],
+    \ ['darkred',     'SeaGreen3'],
+    \ ['darkmagenta', 'DarkOrchid3'],
+    \ ['brown',       'firebrick3'],
+    \ ['gray',        'RoyalBlue3'],
+    \ ['darkmagenta', 'DarkOrchid3'],
+    \ ['Darkblue',    'firebrick3'],
+    \ ['darkgreen',   'RoyalBlue3'],
+    \ ['darkcyan',    'SeaGreen3'],
+    \ ['darkred',     'DarkOrchid3'],
+    \ ['red',         'firebrick3'],
+    \ ]
+" 其他设置
+let g:rbpt_max = 16
+let g:rbpt_loadcmd_toggle = 0
+" 自动开启
+au VimEnter * RainbowParenthesesToggle
+au Syntax * RainbowParenthesesLoadRound
+au Syntax * RainbowParenthesesLoadSquare
+au Syntax * RainbowParenthesesLoadBraces
+
+" Protodef
+" 设置 pullproto.pl 脚本路径
+let g:protodefprotogetter='~/.vim/plugged/vim-protodef/pullproto.pl'
+" 成员函数的实现顺序与声明顺序一致
+let g:disable_protodef_sorting=1
+
+
+" _________________________________________________________________
+" Python配置
+
+" 基于缩进进行代码折叠
+autocmd FileType python set foldmethod=indent
+
+" 设置插件 indexer 调用 ctags 的参数
+" 默认 --c++-kinds=+p+l，重新设置为 --python-kinds=+p+l+x+c+d+e+f+g+m+n+s+t+u+v
+" 默认 --fields=+iaS 不满足 YCM 要求，需改为 --fields=+iaSl
+autocmd FileType python let g:indexer_ctagsCommandLineOptions="--python-kinds=-R* --fields=+iaSl --extra=+q"
+
+" 快速设置文件类型
+nnoremap <leader><leader><leader>py :set filetype=python<CR>
+
+" 80字行高亮提示
+autocmd FileType python set colorcolumn=80
+
+
+" _________________________________________________________________
+" C/C++配置
+
+" 基于语法进行代码折叠
+autocmd FileType c,cpp set foldmethod=indent
+
+" 设置插件 indexer 调用 ctags 的参数
+" 默认 --c++-kinds=+p+l，重新设置为 --c++-kinds=+p+l+x+c+d+e+f+g+m+n+s+t+u+v
+" 默认 --fields=+iaS 不满足 YCM 要求，需改为 --fields=+iaSl
+autocmd FileType c,cpp,h let g:indexer_ctagsCommandLineOptions="--c++-kinds=+p+l+x+c+d+e+f+g+m+n+s+t+u+v --fields=+iaSl --extra=+q"
+
+" Tagbar设置 ctags 对哪些代码元素生成标签
+autocmd FileType c,cpp,h let g:tagbar_type_cpp = {
+    \ 'kinds' : [
+         \ 'c:classes:0:1',
+         \ 'd:macros:0:1',
+         \ 'e:enumerators:0:0',
+         \ 'f:functions:0:1',
+         \ 'g:enumeration:0:1',
+         \ 'l:local:0:1',
+         \ 'm:members:0:1',
+         \ 'n:namespaces:0:1',
+         \ 'p:functions_prototypes:0:1',
+         \ 's:structs:0:1',
+         \ 't:typedefs:0:1',
+         \ 'u:unions:0:1',
+         \ 'v:global:0:1',
+         \ 'x:external:0:1'
+     \ ],
+     \ 'sro'        : '::',
+     \ 'kind2scope' : {
+         \ 'g' : 'enum',
+         \ 'n' : 'namespace',
+         \ 'c' : 'class',
+         \ 's' : 'struct',
+         \ 'u' : 'union'
+     \ },
+     \ 'scope2kind' : {
+         \ 'enum'      : 'g',
+         \ 'namespace' : 'n',
+         \ 'class'     : 'c',
+         \ 'struct'    : 's',
+         \ 'union'     : 'u'
+     \ }
+\ }
+
+" 快速设置文件类型
+nnoremap <leader><leader><leader>c :set filetype=c<CR>
+nnoremap <leader><leader><leader>cpp :set filetype=cpp<CR>
+
+
+" _________________________________________________________________
+" Java配置
+
+" 基于语法进行代码折叠
+autocmd FileType java set foldmethod=syntax
+
+" 设置插件 indexer 调用 ctags 的参数
+" 默认 --c++-kinds=+p+l，重新设置为 --java-kinds=+p+l+x+c+d+e+f+g+m+n+s+t+u+v
+" 默认 --fields=+iaS 不满足 YCM 要求，需改为 --fields=+iaSl
+autocmd FileType java let g:indexer_ctagsCommandLineOptions="--java-kinds=-R* --fields=+iaSl --extra=+q"
+
+" 快速设置文件类型
+nnoremap <leader><leader><leader>ja :set filetype=java<CR>
+
+
+" _________________________________________________________________
+" Racket配置
+" 快速设置文件类型
+nnoremap <leader><leader><leader>rk :set filetype=scheme<CR>
+
+
+" _________________________________________________________________
+" Go配置
+
+" 快速设置文件类型
+nnoremap <leader><leader><leader>go :set filetype=go<CR>
+
+
+" _________________________________________________________________
+" StartPage配置
+
+" Startify
+" 开始页面快捷键提示
+let g:startify_custom_header = [
+        \ '     部分快捷键列表: ',
+        \ '',
+        \ '     基本快捷键: ',
+        \ '     <leader>y     复制至系统剪贴板',
+        \ '     <leader>p     粘贴自系统剪贴板',
+        \ '     <leader>q     关闭当前分割窗口(:q)',
+        \ '     <leader>w     保存当前窗口内容(:w)',
+        \ '     <leader>wQ    保存当前窗口内容并退出(:wq)',
+        \ '     <leader>Q     强制退出Vim',
+        \ '	    <leader>j     向下滚动',
+        \ '	    <leader>k     向上滚动',
+        \ '',
+        \ '     Windows: ',
+        \ '     nw            遍历所有窗口',
+        \ '     <c-l>         跳转右方窗口',
+        \ '     <c-h>         跳转左方窗口',
+        \ '     <c-k>         跳转上方窗口',
+        \ '     <c-j>         跳转下方窗口',
+        \ '',
+        \ '     Tabs: ',
+        \ '     <leader>nt    新建tab',
+        \ '     <leader>dt    关闭tab',
+        \ '     ]t            切换tab',
+        \ '     [t            反向切换tab',
+        \ '',
+        \ '     Buffer: ',
+        \ '     <c-t>         新建buffer',
+        \ '     ]b            切换Buffer',
+        \ '     [b            反向切换Buffer',
+        \ '     C-w           关闭buffer',
+        \ '     <leader>nb    新建buffer',
+        \ '     <leader>bl    显示/隐藏MiniBuffer窗口',
+        \ '     c-tab         切换MiniBuffer',
+        \ '     c-s-tab       反向切换MiniBuffer',
+        \ '     d             删除MiniBuffer',
+        \ '     v             左右排列MiniBuffer',
+        \ '     s             上下排列MiniBuffer',
+        \ '',
+        \ '     折叠: ',
+        \ '     za            折叠或展开',
+        \ '     zC            折叠所在代码块',
+        \ '     zO            展开所在代码块所有折叠',
+        \ '     zM            折叠所有',
+        \ '     zR            展开所有折叠',
+        \ '',
+        \ '     遍历标签: ',
+        \ '     <leader>tn    正向遍历同名标签',
+        \ '     <leader>tp    反向遍历同名标签',
+        \ '     C-]           将光标所在单词匹配标签压入标签栈',
+        \ '     C-t           返回上个标签',
+        \ '',
+        \ '     环境恢复: ',
+        \ '     <leader>ss    保存环境',
+        \ '     <leader>rs    恢复环境',
+        \ '',
+        \ '     YouCompleteMe GoTo: ',
+        \ '     <leader>dc    GoToDeclaration',
+        \ '     <leader>df    GoToDefinition',
+        \ '',
+        \ '     TagBar: ',
+        \ '     <leader>tl    显示/隐藏标签列表',
+        \ '     p             跳转至tag（鼠标焦点保持在taglist）',
+        \ '     P             在预览窗口打开tag',
+        \ '     v             隐藏non-public tags',
+        \ '     +/zo          展开折叠的fold',
+        \ '     -/zc          折叠fold',
+        \ '',
+        \ '     开关注释: ',
+        \ '     <leader>cc    注释选中文本',
+        \ '     <leader>cu    取消选中的注释',
+        \ '',
+        \ '     NERDTree: ',
+        \ '     <leader>fl    打开文件列表',
+        \ '     C             将当前目录设为根目录',
+        \ '     U             上移一个工作路径',
+        \ '     r             刷新工程目录文件列表',
+        \ '     I             显示/隐藏隐藏文件',
+        \ '     m             现创建/删除/剪切/拷贝操作列表',
+        \ '',
+        \ '     VimShell: ',
+        \ '     <leader>vs    启动VimShell',
+        \ '     <leader>vsc   关闭VimShell',
+        \ '',
+        \ '     MultipleCursors: ',
+        \ '     C-d           选中光标下的单词(继续选中)',
+        \ '     C-u           往回选一个',
+        \ '     C-x           跳过下一个',
+        \ '     a/x/c         增/删/替换',
+        \ '',
+        \ '     EasyMotion: ',
+        \ '     <leader><leader>f[a]    标记字母',
+        \ '',
+        \ '     Vim-Surround && Vim-Repeat: ',
+        \ '     cs            替换环绕符',
+        \ '     ds            删除环绕符',
+        \ '     ysiw          单词添加环绕符',
+        \ '     yss           整行添加环绕符',
+        \ '     ys$           到行尾添加环绕符',
+        \ '     .             重复surround指令',
+        \ '',
+        \ '     Trailing-Whitespace: ',
+        \ '     <leader><space>删除空格',
+        \ '',
+        \ '     Expand-Region: ',
+        \ '     <leader>v     扩大所选范围',
+        \ '     <leader>V     缩小所选范围',
+        \ '',
+        \ '     Run: ',
+        \ '     <f5>          运行当前文件',
+        \ '',
+        \ '     CtrlSF: ',
+        \ '     <c-f>         在工程中查找光标所在/选中的关键字',
+        \ '     <c-j>         移动光标到下个匹配项',
+        \ '     <c-k>         移动光标到上个匹配项',
+        \ '     p             在预览窗口打开匹配项',
+        \ '     P             在预览窗口打开匹配项（保留光标焦点）',
+        \ '     M             切换结果窗口至简洁/详细模式',
+        \ '',
+        \ '     CtrlP: ',
+        \ '     <c-p>         查找文件',
+        \ '     <c-r>         查找函数',
+        \ '',
+        \ '     UltiSnips: ',
+        \ '     <leader><tab> 展开/下一个snippets',
+        \ '',
+        \ '     Fswitch: ',
+        \ '     <leader>sw    切换.c++ .h',
+        \ '',
+        \ '',
+        \ ]
+
